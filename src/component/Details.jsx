@@ -8,7 +8,7 @@ const BlogDetails = () => {
 
   useEffect(() => {
     // Fetch detailed blog information based on the blog ID
-    axios.get(`http://localhost:3000/getBlog/${blogId}`).then((response) => {
+    axios.get(`http://localhost:3001/getBlog/${blogId}`).then((response) => {
     console.log("data",response.data[0])  
     setBlogDetails(response.data[0]);
     }).catch((error) => {

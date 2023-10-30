@@ -11,7 +11,10 @@ import BlogDetails from './component/Details';
 
 function App() {
   const [signIn, setSignin] = useState(false);
- 
+ if(window.sessionStorage.length==1 && signIn==false){
+
+  setSignin(true)
+ }
   return (
     <div className="App bg-gray-200">
     <BrowserRouter>

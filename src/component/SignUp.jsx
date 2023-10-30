@@ -15,7 +15,7 @@ const SignUp = () => {
     e.preventDefault();
 
     axios
-      .post("http://localhost:3000/signup", formData)
+      .post("http://localhost:3001/signup", formData)
       .then((response) => {
         alert("Your account is created");
         console.log("Data successfully posted:", response.data);

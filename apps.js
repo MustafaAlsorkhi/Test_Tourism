@@ -3,6 +3,10 @@ const db = require('./db.js');
 const validator = require("validator");
 const cors = require("cors");
 const app = express();
+const jwt = require('jsonwebtoken')
+const cookie = require('cookie');
+const bcrypt = require('bcrypt');
+const multer = require('multer');
 
 app.use(cors());
 app.use(express.json());
@@ -30,9 +34,14 @@ app.post("/signup", async (req, res) => {
     return res.status(400).json({ error: "Password must be at least 8 characters long" });
   }
   try {
+    const hashedPassword = await bcrypt.hash(password, 10);   //10 is salt
+
     const checkQuery = "SELECT user_id FROM users WHERE email = $1";
     const checkResult = await db.query(checkQuery, [email]);
+    
+   
 
+           
     if (checkResult.rows.length > 0) {
       return res.status(409).json({ error: "User already exists" });
     }
@@ -41,18 +50,51 @@ app.post("/signup", async (req, res) => {
                             VALUES ($1, $2, $3)
                             RETURNING user_id`;
 
-    const insertValues = [fullname, email, password];
+    const insertValues = [fullname, email, hashedPassword];
     const result = await db.query(insertQuery, insertValues);
     const newUserId = result.rows[0].user_id;
+    const token = jwt.sign({ id: checkResult.user_id , fullname:checkResult.fullname , email:checkResult.email }, SECRET_KEY,{
+      expiresIn: '1h',
+    });
+
+// const userverify= jwt.verify(token,SECRET_KEY)
 
     res
       .status(201)
-      .json({ message: "User added successfully", user_id: newUserId });
+      .json({ message: "User added successfully", user_id: newUserId,token });
+      console.log(token)
   } catch (error) {
     console.error("Failed to register : ", error);
     res.status(500).json({ error: "Failed to register" });
   }
 });
+// function verifyToken(token) {
+  const verifyJWT = (req, res, next) => {
+
+    const token = req.headers.authorization;      //after get token from front to verfiy it 
+
+    if (!token) return res.sendStatus(401);
+    
+    jwt.verify(
+        token,
+        SECRET_KEY,
+        (err, decoded) => {
+            if (err) return res.sendStatus(403);
+            req.user = decoded;
+            next();
+        }
+    );
+}
+module.exports = verifyJWT
+  // try {
+  //   const user = jwt.verify(token, SECRET_KEY);
+  //   return user;
+  // } catch (error) {
+  //   return null;
+  // }
+
+
+ const SECRET_KEY = '12345678';
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -61,11 +103,17 @@ app.post("/login", async (req, res) => {
     const checkQuery =
       "SELECT user_id, fullname, email FROM users WHERE email = $1 AND password = $2";
     const checkResult = await db.query(checkQuery, [email, password]);
-
+    
+    const token = jwt.sign({ id: checkResult.user_id, fullname: checkResult.fullname }, SECRET_KEY,{
+      expiresIn: '1h',
+    });
+    
     if (checkResult.rows.length === 1) {    //datatybe ===
       res
         .status(200)
-        .json({ message: "Login successful", user: checkResult.rows[0] });
+        .json({ message: "Login successful", user: checkResult.rows[0],token });
+        console.log(token)
+
     } else {
       res.status(401).json({ error: "Invalid email or password" });   //Unauthorized
     }
@@ -75,19 +123,20 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.post("/add-blog", async (req, res) => {
-  const { title, img_url, description} = req.body;
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
-  // if (!req.session || !req.session.userId) {
-  //   return res.status(401).json({ error: "Unauthorized, Please login and try again." });
-  // }
+app.post("/add-blog",verifyJWT, async (req, res) => {
+  
+  const { title, img_url, description,auther_name} = req.body;
+
 
   try {
        
-    const query = `INSERT INTO blogs (title, img_url, description)
-            values ($1, $2, $3)
+    const query = `INSERT INTO blogs (title, img_url, description,auther_name)
+            values ($1, $2, $3,$4)
             RETURNING blog_id`;
-    const values = [title, img_url, description];
+    const values = [title, img_url, description,auther_name];
     
     const result = await db.query(query, values);
     const newBlogId = result.rows[0].blog_id;
@@ -101,6 +150,11 @@ app.post("/add-blog", async (req, res) => {
     res.status(500).json({ error: "Failed to add the blog" });
   }
 });
+
+
+
+
+
 
 app.get("/getBlog/:id", async (req, res) => {
   try {
@@ -117,7 +171,8 @@ app.get("/getBlog/:id", async (req, res) => {
 
 app.get("/getAllBlogs", async (req, res) => {
     try {
-      const query = "SELECT * FROM blogs";
+      const query = `select blogs.title,blogs.description,blogs.img_url , users.fullname as auther_name from blogs 
+      INNER JOIN users ON blogs.auther_name = users.user_id`;
       const result = await db.query(query);
       res.json(result.rows);
     } catch (error) {
@@ -126,8 +181,8 @@ app.get("/getAllBlogs", async (req, res) => {
     }
   });
 
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+app.listen(3001, () => {
+  console.log("Server is running on port 3001");
 });
 
 

@@ -14,9 +14,14 @@ const SignIn = (props) => {
     e.preventDefault();
 
     try {
-      const response = await axios.post("http://localhost:3000/login", formData);
+      const response = await axios.post("http://localhost:3001/login", formData);
+     
       // in user_id  i in id is diffrent
       const user_Id = response.data.user.user_id;
+      const token =response.data.token;
+
+      document.cookie = `token = ${token}; path=/`;
+     
       alert("Login successful!",user_Id);
       console.log("User ID:", user_Id);
       window.sessionStorage.setItem("user_Id", user_Id);
@@ -24,6 +29,8 @@ const SignIn = (props) => {
       setFormData(initialFormData);
 
       // history.push("/dashboard");
+      window.location.href = '/';
+
     } catch (error) {
       console.error("Error fetching user data:", error);
     }

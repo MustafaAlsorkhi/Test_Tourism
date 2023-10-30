@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from 'axios'
+import Cookies from "js-cookie";
 
 const Form = () => {
 
@@ -7,6 +8,7 @@ const Form = () => {
     title: "",
     description: "",
     img_url: "",
+    auther_name:""
   };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,19 +30,30 @@ const Form = () => {
       [name]: value,
     });
   };
+  let token =Cookies.get("token")
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Form Data:", formData);
 
-    axios
-    .post("http://localhost:3000/add-blog", {
-      // user_id :Window.sessionStorage.getItem("user_Id"),
-      title: formData.title,
-      description: formData.description,
-      img_url: formData.img_url,
+      // user_id :Window.sessionStorage.getItem("user_Id"),{
+        const config = {
+          headers: {
+            "Authorization": token
+          }
+        };
 
-    })
+
+    axios
+    .post("http://localhost:3001/add-blog",
+     {title: formData.title,
+      description: formData.description,
+      img_url: formData.img_url ,
+      author_name:window.sessionStorage.getItem("user_id")
+
+    },
+      config
+    )
     .then((response) => {
       alert("dataSended");
       console.log("Data successfully posted:", response.data);

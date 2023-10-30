@@ -7,9 +7,10 @@ const Cards = () => {
 
   useEffect(() => {
     // Fetch the blog data when the component mounts
-    axios.get("http://localhost:3000/getAllBlogs").then((response) => {
+    axios.get("http://localhost:3001/getAllBlogs").then((response) => {
     console.log("all data,",response)  
     setDataOfBlog(response.data);
+    console.log(response.data[0])
     }).catch((error) => {
       console.error("Error fetching blog data:", error);
     });
@@ -34,7 +35,7 @@ const Cards = () => {
               {blogItem.title}
             </h5>
             <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-              Author: {blogItem.author_name}
+              Author: {blogItem.auther_name}
             </p>
           </div>
         </Link>
@@ -46,3 +47,18 @@ const Cards = () => {
 };
 
 export default Cards;
+
+
+
+// auther_name
+// : 
+// "Mustafa"
+// description
+// : 
+// "Amman89"
+// img_url
+// : 
+// "imgAmm.png"
+// title
+// : 
+// "Amman"

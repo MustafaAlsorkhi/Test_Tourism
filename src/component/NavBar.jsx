@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import Cookies from "js-cookie";
+
 
 const NavBar = (props) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -9,8 +11,14 @@ const NavBar = (props) => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
+
+  
+  // Replace 'token' with the name of the cookie holding the token
+
   const signOut = () => {
+    Cookies.remove("token")
     props.setSignin(false);
+    window.location.href = '/';
     window.sessionStorage.clear()
   };
 
